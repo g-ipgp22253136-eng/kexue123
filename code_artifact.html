@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小仙女的奇幻换装科学大冒险</title>
+    <!-- Tailwind CSS 引入 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 图标库 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts 甜美字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', 'ZCOOL KuaiLe', sans-serif;
+            background: linear-gradient(135deg, #ffd1ff 0%, #fad0c4 99%, #fad0c4 100%);
+            touch-action: manipulation;
+        }
+        .font-cute {
+            font-family: 'ZCOOL KuaiLe', cursive, sans-serif;
+        }
+        /* 自定义可爱滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #fff0f5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #ff9ebb;
+            border-radius: 10px;
+        }
+        /* 娃娃换装层级控制 */
+        .doll-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        /* 弹窗与卡片特效 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 3px solid rgba(255, 182, 193, 0.6);
+        }
+        .pulse-btn {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        /* 飘星动画 */
+        .sparkle {
+            position: absolute;
+            pointer-events: none;
+            animation: floatUp 1.5s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-2 md:p-4 text-slate-700">
+
+    <!-- 顶栏导航与状态显示 -->
+    <header class="max-w-5xl mx-auto w-full glass-card rounded-2xl p-3 mb-3 flex justify-between items-center shadow-lg">
+        <div class="flex items-center gap-3">
+            <div class="bg-pink-400 text-white p-2 rounded-xl shadow-md">
+                <i class="fa-solid fa-wand-magic-sparkles text-xl md:text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold text-pink-600 font-cute tracking-wide">一年级科学换装大冒险</h1>
+                <p class="text-xs md:text-sm text-pink-400 font-semibold">让科学变得简单又可爱 ✨</p>
+            </div>
+        </div>
+
+        <!-- 魔法水晶金币与状态 -->
+        <div class="flex items-center gap-2 md:gap-4">
+            <div class="bg-amber-100 border-2 border-amber-300 px-3 py-1.5 rounded-full flex items-center gap-2 shadow-inner">
+                <i class="fa-solid fa-gem text-amber-500 text-lg animate-bounce"></i>
+                <span id="gem-count" class="font-bold text-amber-700 text-base md:text-lg">0</span>
+            </div>
+            <button onclick="toggleSound()" id="sound-btn" class="bg-pink-100 hover:bg-pink-200 text-pink-600 p-2.5 rounded-full transition shadow">
+                <i class="fa-solid fa-volume-high text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- 主界面区域：分为左侧换装娃娃，右侧游戏答题与菜单 -->
+    <main class="max-w-5xl mx-auto w-full flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        
+        <!-- 左侧：换装娃娃展示面板 (占据 5 列) -->
+        <section class="lg:col-span-5 glass-card rounded-3xl p-4 shadow-xl flex flex-col items-center relative overflow-hidden min-h-[420px]">
+            <!-- 场景背景图装饰 -->
+            <div id="doll-stage" class="w-full h-80 md:h-96 relative bg-gradient-to-b from-sky-100 via-pink-50 to-purple-100 rounded-2xl border-2 border-pink-200 flex justify-center items-center overflow-hidden shadow-inner">
+                <!-- 背景小装饰 -->
+                <div class="absolute top-4 left-4 text-pink-300 text-xl"><i class="fa-solid fa-cloud"></i></div>
+                <div class="absolute top-8 right-6 text-yellow-300 text-2xl"><i class="fa-solid fa-sun animate-spin" style="animation-duration: 12s;"></i></div>
+                <div class="absolute bottom-2 left-6 text-green-300 text-2xl"><i class="fa-solid fa-clover"></i></div>
+                <div class="absolute bottom-2 right-8 text-pink-300 text-2xl"><i class="fa-solid fa-heart"></i></div>
+
+                <!-- 娃娃人体基础与装备图层 (采用 SVG 矢量绘画) -->
+                <div class="relative w-48 h-72 md:w-56 md:h-80 flex justify-center items-center">
+                    <!-- 1. 身体底图 -->
+                    <svg class="doll-layer" viewBox="0 0 200 300" style="z-index: 10;">
+                        <!-- 身体肌理 -->
+                        <path d="M 100,70 L 100,180 M 80,110 L 120,110 M 85,240 L 85,180 M 115,240 L 115,180" stroke="#ffd1b3" stroke-width="24" stroke-linecap="round" />
+                        <!-- 头部 -->
+                        <circle cx="100" cy="65" r="38" fill="#ffe0bd" />
+                        <!-- 眼睛 -->
+                        <ellipse cx="88" cy="62" rx="4" ry="6" fill="#4a2e2b" />
+                        <ellipse cx="112" cy="62" rx="4" ry="6" fill="#4a2e2b" />
+                        <circle cx="89" cy="60" r="1.5" fill="#ffffff" />
+                        <circle cx="113" cy="60" r="1.5" fill="#ffffff" />
+                        <!-- 腮红与微笑 -->
+                        <ellipse cx="82" cy="70" rx="5" ry="3" fill="#ffb3c1" opacity="0.6" />
+                        <ellipse cx="118" cy="70" rx="5" ry="3" fill="#ffb3c1" opacity="0.6" />
+                        <path d="M 94,72 Q 100,78 106,72" fill="none" stroke="#e07a5f" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+
+                    <!-- 2. 鞋子层 -->
+                    <svg id="layer-shoes" class="doll-layer" viewBox="0 0 200 300" style="z-index: 15;"></svg>
+
+                    <!-- 3. 服装层 -->
+                    <svg id="layer-clothes" class="doll-layer" viewBox="0 0 200 300" style="z-index: 20;"></svg>
+
+                    <!-- 4. 发型层 -->
+                    <svg id="layer-hair" class="doll-layer" viewBox="0 0 200 300" style="z-index: 25;"></svg>
+
+                    <!-- 5. 头饰层 -->
+                    <svg id="layer-headwear" class="doll-layer" viewBox="0 0 200 300" style="z-index: 30;"></svg>
+
+                    <!-- 6. 魔法杖手持物层 -->
+                    <svg id="layer-wand" class="doll-layer" viewBox="0 0 200 300" style="z-index: 35;"></svg>
+                </div>
+            </div>
+
+            <!-- 娃娃互动与魔衣橱选项卡 -->
+            <div class="w-full mt-3">
+                <div class="flex justify-around bg-pink-100 p-1.5 rounded-xl text-pink-600 font-bold text-xs md:text-sm">
+                    <button onclick="switchWardrobeCategory('hair')" id="tab-hair" class="px-2.5 py-1 rounded-lg bg-pink-500 text-white shadow"><i class="fa-solid fa-scissors mr-1"></i>发型</button>
+                    <button onclick="switchWardrobeCategory('clothes')" id="tab-clothes" class="px-2.5 py-1 rounded-lg hover:bg-pink-200"><i class="fa-solid fa-shirt mr-1"></i>美衣</button>
+                    <button onclick="switchWardrobeCategory('shoes')" id="tab-shoes" class="px-2.5 py-1 rounded-lg hover:bg-pink-200"><i class="fa-solid fa-shoe-prints mr-1"></i>鞋子</button>
+                    <button onclick="switchWardrobeCategory('headwear')" id="tab-headwear" class="px-2.5 py-1 rounded-lg hover:bg-pink-200"><i class="fa-solid fa-crown mr-1"></i>头饰</button>
+                    <button onclick="switchWardrobeCategory('wand')" id="tab-wand" class="px-2.5 py-1 rounded-lg hover:bg-pink-200"><i class="fa-solid fa-wand-magic mr-1"></i>法杖</button>
+                </div>
+
+                <!-- 衣柜物品选择列表 -->
+                <div id="wardrobe-items" class="grid grid-cols-4 gap-2 mt-3 max-h-36 overflow-y-auto p-1">
+                    <!-- 动态生成装备项 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 右侧：主要答题与菜单交互面板 (占据 7 列) -->
+        <section class="lg:col-span-7 glass-card rounded-3xl p-4 md:p-6 shadow-xl flex flex-col min-h-[480px]">
+            
+            <!-- 模式 1：关卡/主菜单选择 -->
+            <div id="menu-view" class="flex flex-col justify-between h-full">
+                <div>
+                    <div class="text-center my-2">
+                        <h2 class="text-2xl font-bold text-pink-600 font-cute">选择科学探索单元</h2>
+                        <p class="text-slate-500 text-sm mt-1">答对问题赚取水晶，打造最漂亮的小仙女吧！</p>
+                    </div>
+
+                    <!-- 单元关卡选择卡片 -->
+                    <div class="space-y-3 mt-4">
+                        <div onclick="startQuiz(1)" class="bg-gradient-to-r from-pink-400 to-rose-400 text-white p-4 rounded-2xl shadow-md hover:shadow-lg transition cursor-pointer flex justify-between items-center transform hover:-translate-y-1">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-white/20 p-3 rounded-xl"><i class="fa-solid fa-flask text-2xl"></i></div>
+                                <div>
+                                    <h3 class="font-bold text-lg">单元 1：科学技能</h3>
+                                    <p class="text-xs text-pink-100">观察、分类、测量、推断与操纵技能 (18题)</p>
+                                </div>
+                            </div>
+                            <div id="unit1-badge" class="bg-white text-pink-600 px-3 py-1 rounded-full text-xs font-bold shadow">
+                                挑战
+                            </div>
+                        </div>
+
+                        <div onclick="startQuiz(2)" class="bg-gradient-to-r from-purple-400 to-indigo-400 text-white p-4 rounded-2xl shadow-md hover:shadow-lg transition cursor-pointer flex justify-between items-center transform hover:-translate-y-1">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-white/20 p-3 rounded-xl"><i class="fa-solid fa-shield-halved text-2xl"></i></div>
+                                <div>
+                                    <h3 class="font-bold text-lg">单元 2：科学室规则</h3>
+                                    <p class="text-xs text-purple-100">安全守则、进入与做实验的规则 (12题)</p>
+                                </div>
+                            </div>
+                            <div id="unit2-badge" class="bg-white text-purple-600 px-3 py-1 rounded-full text-xs font-bold shadow">
+                                挑战
+                            </div>
+                        </div>
+
+                        <div onclick="startQuiz(3)" class="bg-gradient-to-r from-emerald-400 to-teal-500 text-white p-4 rounded-2xl shadow-md hover:shadow-lg transition cursor-pointer flex justify-between items-center transform hover:-translate-y-1">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-white/20 p-3 rounded-xl"><i class="fa-solid fa-seedling text-2xl"></i></div>
+                                <div>
+                                    <h3 class="font-bold text-lg">单元 3：生物与非生物</h3>
+                                    <p class="text-xs text-emerald-100">特征、基本需求与区分生物/非生物 (20题)</p>
+                                </div>
+                            </div>
+                            <div id="unit3-badge" class="bg-white text-emerald-600 px-3 py-1 rounded-full text-xs font-bold shadow">
+                                挑战
+                            </div>
+                        </div>
+
+                        <div onclick="startQuiz(0)" class="bg-gradient-to-r from-amber-400 to-orange-400 text-white p-3.5 rounded-2xl shadow-md hover:shadow-lg transition cursor-pointer flex justify-between items-center transform hover:-translate-y-1">
+                            <div class="flex items-center gap-3">
+                                <div class="bg-white/20 p-2.5 rounded-xl"><i class="fa-solid fa-star text-2xl"></i></div>
+                                <div>
+                                    <h3 class="font-bold text-base">全能大挑战 (全部50题随机)</h3>
+                                    <p class="text-xs text-amber-100">综合复习，赚取双倍水晶！</p>
+                                </div>
+                            </div>
+                            <div class="bg-white text-amber-600 px-3 py-1 rounded-full text-xs font-bold shadow">
+                                冲刺
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 学习进度统计小栏目 -->
+                <div class="mt-4 bg-white/60 p-3 rounded-2xl border border-pink-100 text-xs text-slate-600 flex justify-around text-center">
+                    <div>
+                        <p class="text-slate-400">已解答题目</p>
+                        <p id="stat-solved" class="text-base font-bold text-pink-600">0 / 50</p>
+                    </div>
+                    <div class="border-r border-slate-200"></div>
+                    <div>
+                        <p class="text-slate-400">正确率</p>
+                        <p id="stat-accuracy" class="text-base font-bold text-purple-600">100%</p>
+                    </div>
+                    <div class="border-r border-slate-200"></div>
+                    <div>
+                        <p class="text-slate-400">获得服饰</p>
+                        <p id="stat-unlocked" class="text-base font-bold text-amber-600">1 / 15</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 模式 2：答题区域 (默认隐藏) -->
+            <div id="quiz-view" class="hidden flex-col justify-between h-full">
+                <div>
+                    <!-- 进度条与控制按钮 -->
+                    <div class="flex justify-between items-center mb-3">
+                        <button onclick="backToMenu()" class="text-pink-500 hover:text-pink-700 text-xs md:text-sm font-bold flex items-center gap-1 bg-white px-3 py-1.5 rounded-full border border-pink-200 shadow-sm">
+                            <i class="fa-solid fa-arrow-left"></i> 返回主页
+                        </button>
+                        <span id="quiz-progress-text" class="text-xs md:text-sm font-bold text-pink-600 bg-pink-100 px-3 py-1 rounded-full">
+                            第 1 / 18 题
+                        </span>
+                    </div>
+
+                    <div class="w-full bg-pink-100 h-2.5 rounded-full overflow-hidden mb-4">
+                        <div id="quiz-progress-bar" class="bg-pink-500 h-full transition-all duration-300" style="width: 5%;"></div>
+                    </div>
+
+                    <!-- 题目内容卡片 -->
+                    <div class="bg-white/90 rounded-2xl p-4 md:p-5 shadow-sm border border-pink-100 min-h-[140px] flex flex-col justify-center">
+                        <span id="question-tag" class="inline-block bg-pink-100 text-pink-600 text-xs font-bold px-2.5 py-0.5 rounded-md mb-2 w-max">
+                            科学程序技能
+                        </span>
+                        <h3 id="question-text" class="text-base md:text-lg font-bold text-slate-800 leading-relaxed">
+                            题目加载中...
+                        </h3>
+                    </div>
+
+                    <!-- 选项按钮列表 -->
+                    <div id="options-container" class="grid grid-cols-1 gap-2.5 mt-4">
+                        <!-- 动态渲染选项 -->
+                    </div>
+                </div>
+
+                <!-- 答案反馈与提示 -->
+                <div id="feedback-box" class="mt-3 p-3 rounded-xl hidden text-sm font-semibold flex justify-between items-center">
+                    <span id="feedback-text"></span>
+                    <button id="next-btn" onclick="nextQuestion()" class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-1.5 rounded-xl font-bold shadow transition text-xs md:text-sm flex items-center gap-1">
+                        下一题 <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 模式 3：结算页面 (默认隐藏) -->
+            <div id="result-view" class="hidden flex-col justify-center items-center text-center py-6 h-full">
+                <div class="w-20 h-20 bg-amber-100 rounded-full flex justify-center items-center text-amber-500 text-4xl mb-3 shadow-inner">
+                    <i class="fa-solid fa-trophy animate-bounce"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-pink-600 font-cute">太棒了！探索完成！</h2>
+                <p id="result-summary" class="text-slate-600 text-sm mt-1">你一共答对了 10 题，获得了 50 颗魔法水晶！</p>
+                
+                <div class="my-6 flex gap-2">
+                    <i class="fa-solid fa-star text-amber-400 text-3xl"></i>
+                    <i class="fa-solid fa-star text-amber-400 text-3xl"></i>
+                    <i class="fa-solid fa-star text-amber-400 text-3xl"></i>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="backToMenu()" class="bg-pink-500 hover:bg-pink-600 text-white font-bold px-6 py-2.5 rounded-2xl shadow-md transition">
+                        回到主页
+                    </button>
+                    <button onclick="switchWardrobeCategory('clothes')" class="bg-purple-500 hover:bg-purple-600 text-white font-bold px-6 py-2.5 rounded-2xl shadow-md transition">
+                        去魔衣橱换装 ✨
+                    </button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- 页脚说明 -->
+    <footer class="max-w-5xl mx-auto w-full text-center py-2 text-xs text-pink-500 font-medium">
+        一年级科学（KSSR Semakan）互动小游戏 🌸 专为快乐学习设计
+    </footer>
+
+    <!-- JS 逻辑代码 -->
+    <script>
+        // ==================== 50道完整科学题目数据 ====================
+        const questionsData = [
+            // 单元 1：科学技能 (18题)
+            { id: 1, unit: 1, tag: "观察", q: "我们要用身体的什么部位来【听】小鸟的叫声？", opts: ["眼睛", "耳朵", "鼻子", "舌头"], ans: 1, explanation: "耳朵是用来听声音的感官哦！" },
+            { id: 2, unit: 1, tag: "观察", q: "小红看到花朵是红色的，她是使用了什么感官？", opts: ["视觉（眼睛）", "听觉（耳朵）", "嗅觉（鼻子）", "触觉（皮肤）"], ans: 0, explanation: "我们用眼睛观察颜色和形状。" },
+            { id: 3, unit: 1, tag: "观察", q: "妈妈做好了汤，小丽闻到了香味。她是用了什么？", opts: ["耳朵", "舌头", "鼻子", "手"], ans: 2, explanation: "鼻子可以用来嗅气味。" },
+            { id: 4, unit: 1, tag: "分类", q: "把“猫、狗”分为一组，“苹果、香蕉”分为另一组，这是根据什么分类？", opts: ["生物与非生物", "动物与植物", "颜色", "大小"], ans: 1, explanation: "猫狗是动物，苹果香蕉是植物。 " },
+            { id: 5, unit: 1, tag: "测量", q: "要测量一条木尺的长度，我们应该使用什么工具？", opts: ["温度计", "直尺", "烧杯", "电子秤"], ans: 1, explanation: "直尺是用来测量长度的正确工具。" },
+            { id: 6, unit: 1, tag: "推断", q: "小明看到地面湿了，天空有乌云，他推测刚刚发生了什么？", opts: ["刮大风", "下雨了", "太阳出来了", "打雷"], ans: 1, explanation: "根据地面湿和乌云，可以合理推断刚刚下雨了。" },
+            { id: 7, unit: 1, tag: "预测", q: "冰块放在太阳底下晒，接下来会发生什么事？", opts: ["变大", "融化成水", "变成石头", "变颜色"], ans: 1, explanation: "冰块受热会融化成水。" },
+            { id: 8, unit: 1, tag: "沟通", q: "把实验结果画成漂亮的图画或者写成文字，这是在运用什么技能？", opts: ["分类", "预测", "沟通", "测量"], ans: 2, explanation: "图画、文字和表格都是沟通的方式。" },
+            { id: 9, unit: 1, tag: "操纵性技能", q: "用完放大镜后，我们应该怎么做？", opts: ["随便乱丢", "洗干净后放回原位", "带回家", "扔进垃圾桶"], ans: 1, explanation: "科学仪器使用后要放回原位。" },
+            { id: 10, unit: 1, tag: "操纵性技能", q: "在科学室里捉到了小蜗牛做观察，实验完成后应该？", opts: ["把小蜗牛放回大自然", "丢进垃圾桶", "踩扁它", "关在盒子里不给吃东西"], ans: 0, explanation: "要爱护标本，观察后放回大自然。" },
+            { id: 11, unit: 1, tag: "操纵性技能", q: "清洗玻璃烧杯时，我们要怎样做？", opts: ["用大力甩", "小心清洗，避免打破", "用脚踩", "不用清洗"], ans: 1, explanation: "玻璃仪器易碎，一定要小心拿放和清洗。" },
+            { id: 12, unit: 1, tag: "观察", q: "我们要知道冰淇淋甜不甜，应该用什么感官？", opts: ["味觉（舌头）", "视觉（眼睛）", "听觉（耳朵）", "嗅觉（鼻子）"], ans: 0, explanation: "舌头用来品尝味道（甜、酸、苦、咸）。" },
+            { id: 13, unit: 1, tag: "分类", q: "如果要把按钮按“红色”和“蓝色”分开，这是按什么特征分类？", opts: ["形状", "大小", "颜色", "轻重"], ans: 2, explanation: "红色和蓝色属于颜色特征。" },
+            { id: 14, unit: 1, tag: "操纵性技能", q: "画科学标本（如叶子）时，应该画得怎样？", opts: ["画得和真实标本一样准确", "凭空想象乱画", "涂成紫色", "画成卡通小鸭"], ans: 0, explanation: "科学绘图需要真实、准确。" },
+            { id: 15, unit: 1, tag: "测量", q: "我们要比较两杯水哪杯比较重，可以使用什么？", opts: ["天平/秤", "直尺", "放大镜", "时钟"], ans: 0, explanation: "天平或秤用来测量重量。" },
+            { id: 16, unit: 1, tag: "观察", q: "摸摸小猫的毛 felt 软软的，这是使用了什么感官？", opts: ["触觉（皮肤/手）", "味觉（舌头）", "听觉（耳朵）", "视觉（眼睛）"], ans: 0, explanation: "皮肤可以感受到冷热、粗糙和软硬。" },
+            { id: 17, unit: 1, tag: "操纵性技能", q: "存放科学仪器时，应该存放在哪里？", opts: ["正确的柜子或架子上", "桌子底下", "书包里", "洗手盆里"], ans: 0, explanation: "仪器要妥善分类存放在指定的柜子里。" },
+            { id: 18, unit: 1, tag: "推断", q: "植物的叶子变黄萎缩了，可能的推断是什么？", opts: ["天天晒太阳", "太久没有浇水了", "长大了", "很开心"], ans: 1, explanation: "缺水会导致植物叶子发黄枯萎。" },
+
+            // 单元 2：科学室规则 (12题)
+            { id: 19, unit: 2, tag: "进入科学室", q: "进入科学室之前，我们必须做什么？", opts: ["直接冲进去", "在科学室外排队，等老师允许才进入", "在门口踢球", "推开门就跑"], ans: 1, explanation: "进科学室前要排队，得到老师许可才能进入。" },
+            { id: 20, unit: 2, tag: "安全守则", q: "在科学室里可以吃东西或喝水吗？", opts: ["可以，只要不被看到", "不可以，非常危险", "可以吃零食", "随便吃"], ans: 1, explanation: "科学室有化学品或细菌，绝对不能饮食！" },
+            { id: 21, unit: 2, tag: "安全守则", q: "在科学室里能不能奔跑和玩耍？", opts: ["可以打闹", "不能，容易撞倒仪器发生危险", "可以玩捉迷藏", "可以跳舞"], ans: 1, explanation: "科学室里严禁奔跑追逐。" },
+            { id: 22, unit: 2, tag: "安全守则", q: "如果不小心打破了玻璃烧杯，应该怎么做？", opts: ["偷偷藏起来", "马上告诉老师", "用手去捡碎玻璃", "假装不知道"], ans: 1, explanation: "发生意外或打破东西要立刻报告老师！" },
+            { id: 23, unit: 2, tag: "实验守则", q: "未得到老师许可，我们可以自己拿科学室的化学药品来尝味道吗？", opts: ["绝对不可以", "可以试一口", "用手指蘸来吃", "拿来闻味道"], ans: 0, explanation: "绝对不能擅自尝闻任何科学试剂！" },
+            { id: 24, unit: 2, tag: "离开科学室", q: "离开科学室之前，我们需要做些什么？", opts: ["打扫干净、关好门窗和电源", "把垃圾丢地上就走", "把灯开着", "把水龙头开着"], ans: 0, explanation: "离开前要保持整洁，关闭电源和水龙头。" },
+            { id: 25, unit: 2, tag: "安全守则", q: "如果手湿湿的，可以去按科学室的开关电源吗？", opts: ["可以", "不可以，会触电", "拿水冲", "用湿毛巾按"], ans: 1, explanation: "湿手按电源非常容易触电，很危险。" },
+            { id: 26, unit: 2, tag: "安全守则", q: "长头发的小女生在做科学实验时应该怎么做？", opts: ["把头发扎起来", "让头发挡住眼睛", "用头发擦桌子", "不管它"], ans: 0, explanation: "长发扎好可以防止阻挡视线或触及火源/药品。" },
+            { id: 27, unit: 2, tag: "实验守则", q: "做完实验后的废液（废水）应该倒在哪里？", opts: ["直接倒在桌上", "按照老师指示倒进指定的容器或水槽", "倒进垃圾桶", "倒在同学身上"], ans: 1, explanation: "废液要依指示正确处理。" },
+            { id: 28, unit: 2, tag: "安全守则", q: "科学室里的急救箱是用来做什么的？", opts: ["装零食", "有人受小伤时提供医药救治", "当玩具", "装画笔"], ans: 1, explanation: "急救箱用于处理意外小伤口。" },
+            { id: 29, unit: 2, tag: "安全守则", q: "在科学室发现有火灾或者烟雾，应该怎么做？", opts: ["大声哭", "立刻告诉老师并听从指示逃生", "躲在桌子下", "继续做实验"], ans: 1, explanation: "保持冷静，立刻报告老师并迅速安全撤离。" },
+            { id: 30, unit: 2, tag: "科学室规则", q: "遵守科学室规则有什么好处？", opts: ["保障大家的安全，让实验顺利进行", "很无聊", "让大家受惩罚", "没有好处"], ans: 0, explanation: "遵守规则能保护自己和同学的安全。" },
+
+            // 单元 3：生物与非生物 (20题)
+            { id: 31, unit: 3, tag: "生物特征", q: "以下哪一项是生物？", opts: ["小鸟", "汽车", "洋娃娃", "石头"], ans: 0, explanation: "小鸟有生命，会呼吸和成长，是生物。" },
+            { id: 32, unit: 3, tag: "非生物", q: "铅笔会自己长高或者呼吸吗？", opts: ["会", "不会，它是非生物", "有时候会", "晚上会"], ans: 1, explanation: "铅笔是非生物，不会生长也不会呼吸。" },
+            { id: 33, unit: 3, tag: "生物特征", q: "生物需要什么来维持生命？（基本需求）", opts: ["水、食物、空气和庇护所", "玩具、糖果、电视", "衣服、鞋子、手表", "汽车、房子、手机"], ans: 0, explanation: "水、食物、空气和庇护所是生物的基本需求。" },
+            { id: 34, unit: 3, tag: "生物特征", q: "人如果很久没有吃食物和喝水，会怎么样？", opts: ["变得更强壮", "会虚弱甚至死亡", "会飞", "没有变化"], ans: 1, explanation: "食物和水是生存必需的。" },
+            { id: 35, unit: 3, tag: "生物特征", q: "植物需要空气中的什么来进行光合作用/呼吸？", opts: ["空气", "牛奶", "果汁", "可乐"], ans: 0, explanation: "植物也是生物，同样需要空气。" },
+            { id: 36, unit: 3, tag: "庇护所", q: "小鸟的庇护所（住所）通常是什么？", opts: ["鸟巢", "山洞", "水里", "地下"], ans: 0, explanation: "小鸟建鸟巢来躲避风雨和敌害。" },
+            { id: 37, unit: 3, tag: "庇护所", q: "鱼类的庇护所和生活环境是在哪里？", opts: ["树上", "水里", "沙漠", "空中"], ans: 1, explanation: "鱼生活在水里，在水中呼吸。" },
+            { id: 38, unit: 3, tag: "生物特征", q: "小狗生下了可爱的小狗崽，这说明生物会什么？", opts: ["会繁殖", "会打呼噜", "会飞", "会变色"], ans: 0, explanation: "产生下一代称为繁殖。" },
+            { id: 39, unit: 3, tag: "生物特征", q: "小树苗慢慢长成大树，这说明生物会什么？", opts: ["会成长", "会缩水", "会变形", "会睡觉"], ans: 0, explanation: "体型变大变高是成长的现象。" },
+            { id: 40, unit: 3, tag: "生物特征", q: "当我们用手碰触含羞草时，它的叶子会合起来，这说明生物会？", opts: ["对刺激产生反应", "会繁殖", "会呼吸", "会吃东西"], ans: 0, explanation: "生物会对外界刺激做出反应。" },
+            { id: 41, unit: 3, tag: "生物与非生物", q: "下面哪一组全都是【生物】？", opts: ["花朵、青蛙、小朋友", "机器人、桌子、小狗", "电视机、书本、小猫", "汽车、云朵、树木"], ans: 0, explanation: "花、青蛙和小朋友都是有生命的生物。" },
+            { id: 42, unit: 3, tag: "生物与非生物", q: "下面哪一组全都是【非生物】？", opts: ["皮球、手表、积木", "小草、小兔、蝴蝶", "妈妈、大树、小鸟", "金鱼、水草、石头"], ans: 0, explanation: "皮球、手表和积木都没有生命。" },
+            { id: 43, unit: 3, tag: "生物特征", q: "青蛙是用什么呼吸的？", opts: ["肺和湿润的皮肤", "翅膀", "尾巴", "脚趾"], ans: 0, explanation: "青蛙在陆地用肺，水里或湿润时靠皮肤呼吸。" },
+            { id: 44, unit: 3, tag: "基本需求", q: "下雨天时，小兔子跑回洞穴里，洞穴提供了什么？", opts: ["庇护所（躲避风雨）", "食物", "玩具", "衣服"], ans: 0, explanation: "庇护所能帮生物遮风挡雨和保护安全。" },
+            { id: 45, unit: 3, tag: "生物特征", q: "玩具熊不需要吃东西，也不会长大，所以它是？", opts: ["非生物", "生物", "植物", "动物"], ans: 0, explanation: "没有生命特征的物品是非生物。" },
+            { id: 46, unit: 3, tag: "生物特征", q: "人和动物需要食物主要是为了什么？", opts: ["获得精力（能量）和成长", "为了穿好看衣服", "为了玩耍", "为了睡觉"], ans: 0, explanation: "食物提供能量，维持生命活动。" },
+            { id: 47, unit: 3, tag: "生物特征", q: "植物需要水吗？如果不给植物浇水会发生什么？", opts: ["需要，不浇水会干枯", "不需要水", "会变成金子", "会跑掉"], ans: 0, explanation: "水是植物生长的必需基本需求。" },
+            { id: 48, unit: 3, tag: "分类", q: "蝴蝶会飞、会吃花蜜、会产卵，蝴蝶是？", opts: ["生物", "非生物", "机器", "玩具"], ans: 0, explanation: "蝴蝶符合生物的所有特征。" },
+            { id: 49, unit: 3, tag: "基本需求", q: "人如果没有空气呼吸，几分钟后会怎样？", opts: ["无法生存（窒息）", "会飞起来", "变漂亮", "没有影响"], ans: 0, explanation: "空气（氧气）对生命至关重要。" },
+            { id: 50, unit: 3, tag: "生物与非生物", q: "会移动的扫地机器人是生物吗？为什么？", opts: ["不是，因为它不需要空气和食物，也不会成长", "是，因为它会动", "是，因为它很聪明", "是，因为它有电"], ans: 0, explanation: "虽然扫地机器人会动，但它没有生命特征（不呼吸、不上长、不繁殖），所以是非生物。" }
+        ];
+
+        // ==================== 换装部件 SVG 数据定义 ====================
+        const wardrobeData = {
+            hair: [
+                { id: "h1", name: "双马尾", cost: 0, unlocked: true, svg: `<g><path d="M 68,42 Q 100,18 132,42 C 132,25 68,25 68,42 Z" fill="#ffb3ba"/><path d="M 66,42 Q 50,55 35,95 Q 55,90 68,68 Z" fill="#ffb3ba"/><path d="M 134,42 Q 150,55 165,95 Q 145,90 132,68 Z" fill="#ffb3ba"/><path d="M 72,40 Q 100,32 128,40 Q 100,26 72,40 Z" fill="#ff9ebb"/></g>` },
+                { id: "h2", name: "金色长发", cost: 20, unlocked: false, svg: `<g><path d="M 66,42 Q 50,80 50,165 Q 68,165 68,100 C 68,55 132,55 132,100 Q 132,165 150,165 Q 150,80 134,42 Z" fill="#ffe156"/><path d="M 68,40 Q 100,20 132,40 Q 100,28 68,40 Z" fill="#ffd000"/></g>` },
+                { id: "h3", name: "梦幻紫发", cost: 35, unlocked: false, svg: `<g><path d="M 66,42 Q 45,90 55,180 Q 70,175 68,105 Q 100,45 132,105 Q 130,175 145,180 Q 155,90 134,42 Z" fill="#c8b6ff"/><path d="M 70,38 Q 100,22 130,38 Q 100,28 70,38 Z" fill="#b8a2f8"/></g>` },
+                { id: "h4", name: "丸子头", cost: 50, unlocked: false, svg: `<g><circle cx="100" cy="22" r="18" fill="#8d5b4c"/><path d="M 68,42 Q 100,20 132,42 Q 100,28 68,42 Z" fill="#8d5b4c"/><path d="M 90,20 Q 100,12 110,20" fill="none" stroke="#ffd1dc" stroke-width="3"/></g>` },
+                { id: "h5", name: "双丸子头", cost: 65, unlocked: false, svg: `<g><circle cx="68" cy="26" r="14" fill="#e0a96d"/><circle cx="132" cy="26" r="14" fill="#e0a96d"/><path d="M 68,42 Q 100,22 132,42 Q 100,28 68,42 Z" fill="#e0a96d"/><path d="M 62,36 L 74,36" stroke="#ff4d6d" stroke-width="3"/><path d="M 126,36 L 138,36" stroke="#ff4d6d" stroke-width="3"/></g>` },
+                { id: "h6", name: "冰雪卷发", cost: 80, unlocked: false, svg: `<g><path d="M 65,42 Q 42,90 55,175 Q 70,170 68,110 Q 100,45 132,110 Q 130,170 145,175 Q 158,90 135,42 Z" fill="#a2d2ff"/><path d="M 70,38 Q 100,22 130,38" fill="none" stroke="#ffffff" stroke-width="3.5"/></g>` }
+            ],
+            clothes: [
+                { id: "c1", name: "粉色洋裙", cost: 0, unlocked: true, svg: `<path d="M 82,105 L 118,105 L 135,165 Q 100,175 65,165 Z" fill="#ff9ebb" /><path d="M 85,105 L 115,105 L 110,125 L 90,125 Z" fill="#ffffff" opacity="0.8"/>` },
+                { id: "c2", name: "蓝天白云裙", cost: 25, unlocked: false, svg: `<path d="M 82,105 L 118,105 L 140,170 Q 100,180 60,170 Z" fill="#a0c4ff" /><circle cx="85" cy="145" r="8" fill="#ffffff"/><circle cx="115" cy="150" r="10" fill="#ffffff"/>` },
+                { id: "c3", name: "星空仙女裙", cost: 45, unlocked: false, svg: `<path d="M 82,105 L 118,105 L 145,175 Q 100,190 55,175 Z" fill="#7209b7" /><polygon points="100,130 103,137 110,137 105,142 107,149 100,144 93,149 95,142 90,137 97,137" fill="#ffea00"/>` },
+                { id: "c4", name: "柠檬盛夏短裙", cost: 60, unlocked: false, svg: `<path d="M 82,105 L 118,105 L 130,155 Q 100,160 70,155 Z" fill="#caffbf" /><path d="M 82,105 Q 100,115 118,105 L 118,125 Q 100,135 82,125 Z" fill="#fdffb6"/>` },
+                { id: "c5", name: "洛丽塔蓬蓬裙", cost: 75, unlocked: false, svg: `<path d="M 80,105 L 120,105 L 145,170 Q 100,185 55,170 Z" fill="#ff70a6" /><path d="M 60,160 Q 100,175 140,160 Q 100,185 60,160 Z" fill="#ffffff" /><path d="M 82,105 C 80,125 120,125 118,105 Z" fill="#ff97b7"/>` },
+                { id: "c6", name: "古风汉服裙", cost: 90, unlocked: false, svg: `<path d="M 78,105 L 122,105 L 135,185 Q 100,190 65,185 Z" fill="#ffcad4" /><path d="M 78,105 L 100,135 L 122,105" fill="none" stroke="#b5e2fa" stroke-width="5"/><rect x="85" y="130" width="30" height="12" fill="#b5e2fa" />` }
+            ],
+            shoes: [
+                { id: "s1", name: "小红鞋", cost: 0, unlocked: true, svg: `<ellipse cx="85" cy="242" rx="12" ry="6" fill="#ff6b6b" /><ellipse cx="115" cy="242" rx="12" ry="6" fill="#ff6b6b" />` },
+                { id: "s2", name: "水晶高跟鞋", cost: 20, unlocked: false, svg: `<path d="M 73,238 L 97,238 L 95,246 L 73,244 Z" fill="#9bf6ff" opacity="0.9"/><path d="M 103,238 L 127,238 L 127,244 L 105,246 Z" fill="#9bf6ff" opacity="0.9"/>` },
+                { id: "s3", name: "粉芭蕾鞋", cost: 35, unlocked: false, svg: `<ellipse cx="85" cy="242" rx="11" ry="6" fill="#ffb5a7" /><path d="M 80,230 L 90,240 M 90,230 L 80,240" stroke="#ffb5a7" stroke-width="2"/><ellipse cx="115" cy="242" rx="11" ry="6" fill="#ffb5a7" />` },
+                { id: "s4", name: "彩虹运动鞋", cost: 50, unlocked: false, svg: `<rect x="73" y="235" width="24" height="12" rx="5" fill="#f72585"/><rect x="103" y="235" width="24" height="12" rx="5" fill="#4cc9f0"/><rect x="73" y="244" width="24" height="3" fill="#ffffff"/><rect x="103" y="244" width="24" height="3" fill="#ffffff"/>` },
+                { id: "s5", name: "猫咪小靴子", cost: 65, unlocked: false, svg: `<rect x="75" y="228" width="20" height="18" rx="4" fill="#3a86ff"/><rect x="105" y="228" width="20" height="18" rx="4" fill="#3a86ff"/><circle cx="85" cy="233" r="3" fill="#ffffff"/><circle cx="115" cy="233" r="3" fill="#ffffff"/>` }
+            ],
+            headwear: [
+                { id: "hw1", name: "蝴蝶结", cost: 0, unlocked: true, svg: `<polygon points="100,32 85,22 85,42" fill="#ff4d6d"/><polygon points="100,32 115,22 115,42" fill="#ff4d6d"/><circle cx="100" cy="32" r="5" fill="#fff"/>` },
+                { id: "hw2", name: "黄金皇冠", cost: 30, unlocked: false, svg: `<path d="M 80,32 L 85,12 L 92,24 L 100,8 L 108,24 L 115,12 L 120,32 Z" fill="#ffb703" stroke="#fb8500" stroke-width="1.5"/><circle cx="100" cy="14" r="2.5" fill="#e63946"/>` },
+                { id: "hw3", name: "花朵头饰", cost: 45, unlocked: false, svg: `<circle cx="75" cy="32" r="7" fill="#ffb3c1"/><circle cx="68" cy="32" r="5" fill="#ffabcc"/><circle cx="82" cy="32" r="5" fill="#ffabcc"/><circle cx="75" cy="25" r="5" fill="#ffabcc"/><circle cx="75" cy="39" r="5" fill="#ffabcc"/>` },
+                { id: "hw4", name: "萌猫耳朵", cost: 55, unlocked: false, svg: `<polygon points="68,40 60,18 80,30" fill="#ffb6c1" stroke="#ff6b81" stroke-width="2"/><polygon points="132,40 140,18 120,30" fill="#ffb6c1" stroke="#ff6b81" stroke-width="2"/>` },
+                { id: "hw5", name: "独角兽角", cost: 70, unlocked: false, svg: `<polygon points="100,5 92,32 108,32" fill="#ffea00" stroke="#ffb703" stroke-width="1.5"/><line x1="94" y1="24" x2="106" y2="20" stroke="#ff007f" stroke-width="2"/><line x1="96" y1="14" x2="104" y2="10" stroke="#00f5d4" stroke-width="2"/>` },
+                { id: "hw6", name: "天使光环", cost: 85, unlocked: false, svg: `<ellipse cx="100" cy="18" rx="30" ry="8" fill="none" stroke="#ffee83" stroke-width="5" />` }
+            ],
+            wand: [
+                { id: "w1", name: "木质魔法棒", cost: 0, unlocked: true, svg: `<line x1="125" y1="110" x2="155" y2="160" stroke="#b08968" stroke-width="4" stroke-linecap="round"/><polygon points="125,110 120,100 130,103 123,93 131,98 125,110" fill="#ffd166"/>` },
+                { id: "w2", name: "爱心仙女权杖", cost: 40, unlocked: false, svg: `<line x1="125" y1="110" x2="160" y2="170" stroke="#ff85a1" stroke-width="5" stroke-linecap="round"/><path d="M 125,110 C 125,100 110,95 110,108 C 110,120 125,128 125,128 C 125,128 140,120 140,108 C 140,95 125,100 125,110 Z" fill="#ff0a54"/>` },
+                { id: "w3", name: "星空魔杖", cost: 60, unlocked: false, svg: `<line x1="125" y1="110" x2="160" y2="170" stroke="#4cc9f0" stroke-width="5" stroke-linecap="round"/><polygon points="125,110 128,100 138,100 130,93 133,83 125,88 117,83 120,93 112,100 122,100" fill="#f72585"/>` },
+                { id: "w4", name: "棒棒糖", cost: 75, unlocked: false, svg: `<line x1="125" y1="110" x2="155" y2="160" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/><circle cx="122" cy="102" r="14" fill="#ff4d6d"/><path d="M 112,102 Q 122,92 132,102" fill="none" stroke="#ffffff" stroke-width="3"/>` },
+                { id: "w5", name: "小熊抱枕", cost: 90, unlocked: false, svg: `<circle cx="140" cy="130" r="14" fill="#b08968"/><circle cx="130" cy="118" r="5" fill="#b08968"/><circle cx="150" cy="118" r="5" fill="#b08968"/><ellipse cx="140" cy="133" rx="5" ry="3" fill="#ffe6a7"/><circle cx="140" cy="132" r="1.5" fill="#000000"/>` }
+            ]
+        };
+
+        // 当前穿戴装备的ID记录
+        let currentEquipped = {
+            hair: "h1",
+            clothes: "c1",
+            shoes: "s1",
+            headwear: "hw1",
+            wand: "w1"
+        };
+
+        // 游戏全局状态变量
+        let userGems = 0;
+        let activeCategory = "hair";
+        let currentQuizList = [];
+        let currentQIndex = 0;
+        let correctCount = 0;
+        let totalAnswered = 0;
+        let totalCorrectOverall = 0;
+        let soundEnabled = true;
+
+        // 音效播放辅助函数 (使用 Web Audio API，无需外部音效文件)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.2); // G5
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+                    osc.frequency.setValueAtTime(180, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                } else if (type === 'unlock') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.5);
+                }
+            } catch(e) { console.log(e); }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById("sound-btn");
+            btn.innerHTML = soundEnabled ? `<i class="fa-solid fa-volume-high text-lg"></i>` : `<i class="fa-solid fa-volume-xmark text-lg text-slate-400"></i>`;
+        }
+
+        // 初始化游戏
+        window.onload = function() {
+            renderDoll();
+            renderWardrobe();
+            updateUI();
+        };
+
+        // 渲染娃娃穿戴效果
+        function renderDoll() {
+            for (let cat in currentEquipped) {
+                const itemId = currentEquipped[cat];
+                const layerElem = document.getElementById(`layer-${cat}`);
+                if (!itemId) {
+                    layerElem.innerHTML = "";
+                    continue;
+                }
+                const itemObj = wardrobeData[cat].find(i => i.id === itemId);
+                if (itemObj) {
+                    layerElem.innerHTML = itemObj.svg;
+                }
+            }
+        }
+
+        // 切换衣柜选项卡
+        function switchWardrobeCategory(cat) {
+            activeCategory = cat;
+            const categories = ['hair', 'clothes', 'shoes', 'headwear', 'wand'];
+            categories.forEach(c => {
+                const tab = document.getElementById(`tab-${c}`);
+                if (c === cat) {
+                    tab.className = "px-2.5 py-1 rounded-lg bg-pink-500 text-white shadow font-bold";
+                } else {
+                    tab.className = "px-2.5 py-1 rounded-lg hover:bg-pink-200 text-pink-600 font-bold";
+                }
+            });
+            renderWardrobe();
+        }
+
+        // 渲染衣柜物品网格
+        function renderWardrobe() {
+            const container = document.getElementById("wardrobe-items");
+            container.innerHTML = "";
+
+            const items = wardrobeData[activeCategory];
+            items.forEach(item => {
+                const isEquipped = currentEquipped[activeCategory] === item.id;
+                const card = document.createElement("div");
+                card.className = `relative flex flex-col items-center justify-between p-2 rounded-xl border-2 transition cursor-pointer ${
+                    isEquipped ? 'border-pink-500 bg-pink-100/80 shadow-md' : 'border-pink-200 bg-white/70 hover:bg-pink-50'
+                }`;
+
+                // 缩略图 Preview
+                let previewSvg = `<svg viewBox="0 0 200 300" class="w-12 h-12">${item.svg}</svg>`;
+
+                let statusBadge = "";
+                if (isEquipped) {
+                    statusBadge = `<span class="absolute -top-1 -right-1 bg-pink-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">已穿</span>`;
+                } else if (!item.unlocked) {
+                    statusBadge = `<span class="bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold flex items-center gap-1 border border-amber-300"><i class="fa-solid fa-gem text-amber-500"></i> ${item.cost}</span>`;
+                } else {
+                    statusBadge = `<span class="text-xs text-pink-400 font-bold">拥有</span>`;
+                }
+
+                card.innerHTML = `
+                    ${statusBadge}
+                    ${previewSvg}
+                    <span class="text-[11px] font-bold text-slate-700 truncate w-full text-center mt-1">${item.name}</span>
+                `;
+
+                card.onclick = () => handleItemClick(item);
+                container.appendChild(card);
+            });
+        }
+
+        // 点击装备或购买
+        function handleItemClick(item) {
+            if (item.unlocked) {
+                // 如果已解锁，直接穿上（或卸下）
+                if (currentEquipped[activeCategory] === item.id && activeCategory !== 'clothes' && activeCategory !== 'hair') {
+                    currentEquipped[activeCategory] = null; // 允许部分部位不穿
+                } else {
+                    currentEquipped[activeCategory] = item.id;
+                }
+                playSound('unlock');
+                createSparkles();
+                renderDoll();
+                renderWardrobe();
+            } else {
+                // 需要解锁购买
+                if (userGems >= item.cost) {
+                    userGems -= item.cost;
+                    item.unlocked = true;
+                    currentEquipped[activeCategory] = item.id;
+                    playSound('unlock');
+                    createSparkles();
+                    updateUI();
+                    renderDoll();
+                    renderWardrobe();
+                } else {
+                    alert(`魔法水晶不足哦！还需要 ${item.cost - userGems} 颗水晶，快去答题赚取吧！✨`);
+                }
+            }
+        }
+
+        // 视觉特效：生成飘星
+        function createSparkles() {
+            const stage = document.getElementById("doll-stage");
+            for (let i = 0; i < 8; i++) {
+                const sparkle = document.createElement("i");
+                sparkle.className = "fa-solid fa-sparkles text-yellow-300 sparkle text-lg";
+                sparkle.style.left = `${20 + Math.random() * 60}%`;
+                sparkle.style.top = `${30 + Math.random() * 40}%`;
+                stage.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 1500);
+            }
+        }
+
+        // 更新数值 UI
+        function updateUI() {
+            document.getElementById("gem-count").innerText = userGems;
+
+            // 统计已解锁物品数
+            let unlockedTotal = 0;
+            let totalItems = 0;
+            for (let cat in wardrobeData) {
+                wardrobeData[cat].forEach(i => {
+                    totalItems++;
+                    if (i.unlocked) unlockedTotal++;
+                });
+            }
+            document.getElementById("stat-unlocked").innerText = `${unlockedTotal} / ${totalItems}`;
+            document.getElementById("stat-solved").innerText = `${totalAnswered} / 50`;
+            
+            const acc = totalAnswered > 0 ? Math.round((totalCorrectOverall / totalAnswered) * 100) : 100;
+            document.getElementById("stat-accuracy").innerText = `${acc}%`;
+        }
+
+        // ==================== 答题逻辑引擎 ====================
+
+        // 开始答题关卡
+        function startQuiz(unitNum) {
+            if (unitNum === 0) {
+                // 全能大挑战：打乱所有50题
+                currentQuizList = [...questionsData].sort(() => Math.random() - 0.5);
+            } else {
+                currentQuizList = questionsData.filter(q => q.unit === unitNum);
+            }
+
+            currentQIndex = 0;
+            correctCount = 0;
+
+            document.getElementById("menu-view").classList.add("hidden");
+            document.getElementById("result-view").classList.add("hidden");
+            document.getElementById("quiz-view").classList.remove("hidden");
+            document.getElementById("quiz-view").classList.add("flex");
+
+            loadQuestion();
+        }
+
+        // 加载当前题目
+        function loadQuestion() {
+            const q = currentQuizList[currentQIndex];
+
+            // 更新进度条
+            const progressPercent = ((currentQIndex + 1) / currentQuizList.length) * 100;
+            document.getElementById("quiz-progress-bar").style.width = `${progressPercent}%`;
+            document.getElementById("quiz-progress-text").innerText = `第 ${currentQIndex + 1} / ${currentQuizList.length} 题`;
+
+            // 设置标签与题目
+            document.getElementById("question-tag").innerText = `单元 ${q.unit} · ${q.tag}`;
+            document.getElementById("question-text").innerText = q.q;
+
+            // 隐藏反馈框
+            const feedbackBox = document.getElementById("feedback-box");
+            feedbackBox.classList.add("hidden");
+
+            // 渲染选项
+            const container = document.getElementById("options-container");
+            container.innerHTML = "";
+
+            q.opts.forEach((optText, idx) => {
+                const btn = document.createElement("button");
+                btn.className = "w-full text-left p-3.5 rounded-xl border-2 border-pink-100 bg-white hover:border-pink-300 hover:bg-pink-50 transition font-bold text-slate-700 flex items-center justify-between shadow-sm text-xs md:text-sm";
+                btn.innerHTML = `
+                    <span><span class="inline-block w-6 h-6 rounded-full bg-pink-100 text-pink-600 text-center leading-6 mr-2 font-bold">${String.fromCharCode(65 + idx)}</span>${optText}</span>
+                    <i class="fa-regular fa-circle text-pink-300"></i>
+                `;
+                btn.onclick = () => checkAnswer(idx, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        // 检查答案
+        function checkAnswer(selectedIdx, btnElem) {
+            const q = currentQuizList[currentQIndex];
+            const container = document.getElementById("options-container");
+            const allBtns = container.querySelectorAll("button");
+
+            // 禁用所有按钮防止重复点击
+            allBtns.forEach(b => b.disabled = true);
+
+            totalAnswered++;
+
+            const feedbackBox = document.getElementById("feedback-box");
+            const feedbackText = document.getElementById("feedback-text");
+            feedbackBox.classList.remove("hidden");
+
+            if (selectedIdx === q.ans) {
+                // 答对
+                playSound('correct');
+                correctCount++;
+                totalCorrectOverall++;
+                userGems += 5; // 答对一题获得5水晶
+
+                btnElem.className = "w-full text-left p-3.5 rounded-xl border-2 border-emerald-400 bg-emerald-50 font-bold text-emerald-800 flex items-center justify-between shadow-sm text-xs md:text-sm";
+                btnElem.querySelector("i").className = "fa-solid fa-circle-check text-emerald-500 text-lg";
+
+                feedbackBox.className = "mt-3 p-3 rounded-xl text-xs md:text-sm font-semibold flex justify-between items-center bg-emerald-100 text-emerald-800 border border-emerald-200";
+                feedbackText.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 太棒了！答对了！魔法水晶 +5 ✨ (${q.explanation})`;
+            } else {
+                // 答错
+                playSound('wrong');
+                btnElem.className = "w-full text-left p-3.5 rounded-xl border-2 border-rose-400 bg-rose-50 font-bold text-rose-800 flex items-center justify-between shadow-sm text-xs md:text-sm";
+                btnElem.querySelector("i").className = "fa-solid fa-circle-xmark text-rose-500 text-lg";
+
+                // 标出正确答案
+                allBtns[q.ans].className = "w-full text-left p-3.5 rounded-xl border-2 border-emerald-400 bg-emerald-50 font-bold text-emerald-800 flex items-center justify-between shadow-sm text-xs md:text-sm";
+                allBtns[q.ans].querySelector("i").className = "fa-solid fa-circle-check text-emerald-500 text-lg";
+
+                feedbackBox.className = "mt-3 p-3 rounded-xl text-xs md:text-sm font-semibold flex justify-between items-center bg-rose-100 text-rose-800 border border-rose-200";
+                feedbackText.innerHTML = `<i class="fa-solid fa-heart-crack mr-1"></i> 差一点点哦！正确答案是: ${q.opts[q.ans]} (${q.explanation})`;
+            }
+
+            updateUI();
+        }
+
+        // 下一题或结算
+        function nextQuestion() {
+            currentQIndex++;
+            if (currentQIndex < currentQuizList.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // 显示结算结果
+        function showResults() {
+            document.getElementById("quiz-view").classList.add("hidden");
+            document.getElementById("quiz-view").classList.remove("flex");
+            document.getElementById("result-view").classList.remove("hidden");
+            document.getElementById("result-view").classList.add("flex");
+
+            const earnedGems = correctCount * 5;
+            document.getElementById("result-summary").innerText = `你在本次探索中答对了 ${correctCount} / ${currentQuizList.length} 题，获得了 ${earnedGems} 颗魔法水晶！`;
+        }
+
+        // 返回主菜单
+        function backToMenu() {
+            document.getElementById("quiz-view").classList.add("hidden");
+            document.getElementById("quiz-view").classList.remove("flex");
+            document.getElementById("result-view").classList.add("hidden");
+            document.getElementById("result-view").classList.remove("flex");
+            document.getElementById("menu-view").classList.remove("hidden");
+            updateUI();
+        }
+    </script>
+</body>
+</html>
